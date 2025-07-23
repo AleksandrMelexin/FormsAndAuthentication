@@ -21,7 +21,7 @@ export class UsersService {
   getAll(): UserGetDto[] {
     return Object.values(this.usersDB).map(
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      ({ password, ...rest }: IUsersData) => ({ ...rest }),
+      ({ ...rest }: IUsersData) => ({ ...rest }),
     );
   }
 

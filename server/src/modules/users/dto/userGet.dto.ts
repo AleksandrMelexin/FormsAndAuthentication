@@ -5,7 +5,7 @@ import {
   MaxLength,
   IsEmail,
   IsOptional,
-  IsDate,
+  IsDateString,
   IsPhoneNumber,
   IsString,
   IsBoolean,
@@ -35,7 +35,7 @@ export class UserGetDto {
   email: string;
 
   @IsOptional()
-  @IsDate()
+  @IsDateString()
   @ApiProperty({ description: 'User birthday', nullable: true })
   birthDate?: Date;
 
