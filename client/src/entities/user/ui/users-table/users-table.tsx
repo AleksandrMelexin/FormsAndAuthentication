@@ -1,6 +1,5 @@
 import { Table } from 'antd';
 import type { IUser } from "@/entities/user/model/user-model";
-import { useState } from "react";
 import styles from "./users-table.module.css";
 import { useNavigate } from 'react-router-dom';
 
@@ -8,9 +7,7 @@ interface UsersTableProps {
     gotUsers: IUser[];
 }
 const UsersTable = ({ gotUsers }: UsersTableProps) => {
-  const [users, setUsers] = useState<IUser[]>(
-    gotUsers.map(user => ({ ...user, key: user.id }))
-  );
+
   const navigate = useNavigate();
   const rowClickHandler = (record: IUser) => {
     return {
@@ -40,9 +37,10 @@ const UsersTable = ({ gotUsers }: UsersTableProps) => {
     },
   ]
   return (
-    <Table 
+    <Table
+      rowKey="id"
       columns={columns} 
-      dataSource={users} 
+      dataSource={gotUsers} 
       onRow={rowClickHandler}
       pagination={{
         pageSize: 20,

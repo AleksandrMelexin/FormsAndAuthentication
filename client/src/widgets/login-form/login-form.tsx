@@ -10,14 +10,24 @@ const LoginForm = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const submitHandler = async () => {
-        const res = await serverApi.auth("admin@inno.tech", "admin");
-        //const res = serverApi.auth(form.getFieldValue('email'), form.getFieldValue('password'));
-        if ("error" in res) {
-            console.error(res.error);
-          } else {
-            if (res.status === 201) {
+        const res = await serverApi.auth(form.getFieldValue('email'), form.getFieldValue('password'));
+        const response = res as Response;
+        if (!response.ok){
+            form.setFields([{
+                name: 'submit',
+                errors: ['Неверный логин или пароль'],
+            }]);
+        }
+        else{
+            if (response.status === 201) {
               dispatch(setAuth(true));
               navigate("/");
+            }
+            else{
+                form.setFields([{
+                    name: 'submit',
+                    errors: [`Неверный статус: ${response.status}`],
+                }]);
             }
         }
     };
@@ -42,11 +52,13 @@ const LoginForm = () => {
             >
                 <Input.Password />
             </Form.Item>
-            <Space className={styles.submit}>
-                <Button type="primary" htmlType="submit">
-                    Войти
-                </Button>
-            </Space>
+            <Form.Item name="submit">
+                <Space className={styles.submit}>
+                    <Button type="primary" htmlType="submit">
+                        Войти
+                    </Button>
+                </Space>
+            </Form.Item>
         </Form>
     );
 };

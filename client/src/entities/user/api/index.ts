@@ -1,3 +1,3 @@
-import {getUsers} from "./user-api"
+import {getUsers, getUserByID, updateUser, deleteUser, createUser} from "./user-api"
 
-export const userApi = { getUsers };
+export const userApi = { getUsers, getUserByID, updateUser, deleteUser, createUser };

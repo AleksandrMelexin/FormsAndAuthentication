@@ -1,3 +1,5 @@
+import type { Dayjs } from "dayjs";
+
 export enum Employment {
     frontendDeveloper = "frontend-разработчик",
     backendDeveloper = "backend-разработчик",
@@ -10,11 +12,25 @@ export interface IUser {
     id: string;
     name: string;
     surName: string;
-    password: string;
+    password?: string;
     fullName: string;
     email: string;
-    birthDate?: moment.Moment;
-    telephone?: string;
+    birthDate?: Date | Dayjs;
+    telephone?: string | null;
     employment?: string;
     userAgreement?: boolean;
 }
+
+export const emptyUser: IUser = {
+    id: "",
+    name: "",
+    surName: "",
+    password: "",
+    fullName: "",
+    email: "",
+    birthDate: new Date(),
+    telephone: "",
+    employment: Employment.none,
+    userAgreement: false
+}
+

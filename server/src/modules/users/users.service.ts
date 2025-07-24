@@ -15,6 +15,10 @@ export class UsersService {
       fullName: 'Admin',
       password: 'admin',
       email: 'admin@inno.tech',
+      birthDate: new Date(),
+      employment: 'Admin',
+      userAgreement: true,
+      telephone: '+71231234545',
     },
   };
 

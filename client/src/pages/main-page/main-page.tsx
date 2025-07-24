@@ -1,5 +1,4 @@
 import styles from "./main-page.module.css";
-import { mockUsers } from "@/entities/user/model/mock-users";
 import type { IUser } from "@/entities/user/model/user-model";
 import { useEffect, useState } from "react";
 import UsersTable from "@/entities/user/ui/users-table";
@@ -10,7 +9,7 @@ import { setAuth } from "@/shared/store/slices/server";
 import { userApi } from "@/entities/user/api";
 
 const MainPage = () => {
-  const [users, setUsers] = useState<IUser[]>(mockUsers);
+  const [users, setUsers] = useState<IUser[]>([]);
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -30,14 +29,11 @@ const MainPage = () => {
   const fetchUsers = async () => {
     try {
       const resUsers = await userApi.getUsers();
-      if (typeof resUsers === 'object' && 'error' in resUsers) {
+      if ('error' in resUsers) {
         console.error(resUsers.error);
-        return;
+      } else {
+        setUsers(resUsers as IUser[]);
       }
-
-      const usersArray = Array.isArray(resUsers) ? resUsers : [resUsers];
-      console.log('Users data:', usersArray);
-      setUsers(usersArray as IUser[]);
     } catch (error) {
       console.error(error);
     }

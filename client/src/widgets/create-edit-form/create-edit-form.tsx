@@ -1,25 +1,14 @@
 import { v4 as uuidv4 } from "uuid";
-import { Employment, type IUser } from "@/entities/user/model/user-model";
+import { emptyUser, type IUser } from "@/entities/user/model/user-model";
 import styles from "./create-edit-form.module.css";
-import { Form, Input, Button, DatePicker, Checkbox, Space } from "antd";
+import { Form, Input, Button, DatePicker, Checkbox, Space, Modal } from "antd";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SelectForm from "@/shared/ui/select-form";
 import { PhoneOutlined } from "@ant-design/icons";
-import moment from 'moment';
-
-const emptyUser: IUser = {
-    id: "",
-    name: "",
-    surName: "",
-    password: "",
-    fullName: "",
-    email: "",
-    birthDate: moment(),
-    telephone: "",
-    employment: Employment.none,
-    userAgreement: false
-}
+import dayjs from 'dayjs';
+import type { Dayjs } from 'dayjs';
+import { userApi } from "@/entities/user/api";
 
 interface CreateEditFormProps {
     gotUser?: IUser;
@@ -27,25 +16,68 @@ interface CreateEditFormProps {
 }
 
 const CreateEditForm = ({gotUser = emptyUser, action}: CreateEditFormProps) => {
-    const [isEdit, setIsEdit] = useState(action === "edit");
+    const isEdit = action === "edit";
     const [user, setUser] = useState<IUser>({
         ...gotUser,
         id: gotUser.id || uuidv4(),
-        birthDate: gotUser.birthDate ? moment(gotUser.birthDate) : moment()
+        birthDate: gotUser.birthDate ? dayjs(gotUser.birthDate) : dayjs()
     })
+    const [open, setOpen] = useState(false);
     const navigate = useNavigate();
     const [form] = Form.useForm();
 
-    const changeHandler = (name: string, value: string | boolean | Date | moment.Moment) => {
-        setUser((prev) => ({ ...prev, [name]: value }));
-      };
-
-    const submitEditHandler = () => {
-        console.log("edit");
+    const showModal = () => {
+        setOpen(true);
     };
     
-    const submitCreateHandler = () => {
-        console.log("create");
+    const hideModal = () => {
+        setOpen(false);
+    };
+
+    const changeHandler = (name: string, value: string | boolean | Date | Dayjs) => {
+        setUser((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const submitEditHandler = async () => {
+        const res = await userApi.updateUser(user);
+        if (!res.success){
+            const errorMessage = res.data?.message?.join(', ') ?? 'Unknown error';
+            form.setFields([{
+                name: 'submit',
+                errors: [`Ошибка редактирования пользователя: ${errorMessage}`],
+            }]);
+        }
+        else{
+            navigate("/");
+        }
+    };
+
+    const submitDeleteHandler = async () => {
+        const res = await userApi.deleteUser(user.id);
+        if (!res.success){
+            const errorMessage = res.data?.message?.join(', ') ?? 'Unknown error';
+            form.setFields([{
+                name: 'submit',
+                errors: [`Ошибка удаления пользователя: ${errorMessage}`],
+            }]);
+        }
+        else{
+            navigate("/");
+        }
+    };
+    
+    const submitCreateHandler = async () => {
+        const res = await userApi.createUser(user);
+        if (!res.success){
+            const errorMessage = res.data?.message?.join(', ') ?? 'Неизвестная ошибка';
+            form.setFields([{
+                name: 'submit',
+                errors: [`Ошибка создания пользователя: ${errorMessage}`],
+            }]);
+        }
+        else{
+            navigate("/");
+        }
     };
     
     const submitHandler = () => {
@@ -67,7 +99,6 @@ const CreateEditForm = ({gotUser = emptyUser, action}: CreateEditFormProps) => {
         } else {
             submitCreateHandler();
         }
-        navigate("/");
     };
     return (
         <Form
@@ -88,7 +119,7 @@ const CreateEditForm = ({gotUser = emptyUser, action}: CreateEditFormProps) => {
                 />
             </Form.Item>
             <Form.Item
-                label="Имя"
+                label="Фамилия"
                 name="surName"
                 rules={[{ required: true, message: "Введите фамилию" }]}
             >
@@ -97,17 +128,42 @@ const CreateEditForm = ({gotUser = emptyUser, action}: CreateEditFormProps) => {
                     onChange={(e) => changeHandler("surName", e.target.value)}
                 />
             </Form.Item>
-            <Form.Item
-                label="Пароль"
-                name="password"
-                rules={[{ required: true, message: "Введите пароль" }]}
-            >
-                <Input.Password
-                    placeholder="Введите пароль"
-                    onChange={(e) => changeHandler("password", e.target.value)}
-                    disabled={isEdit}
-                />
-            </Form.Item>
+            {(action === "create") &&
+                <Form.Item
+                    label="Пароль"
+                    name="password"
+                    rules={[{ required: true, message: "Введите пароль" }]}
+                >
+                    <Input.Password
+                        placeholder="Введите пароль"
+                        onChange={(e) => changeHandler("password", e.target.value)}
+                        disabled={isEdit}
+                    />
+                </Form.Item>
+            }
+            {(action === "create") &&
+                <Form.Item
+                    label="Подтвердите пароль"
+                    name="confirmPassword"
+                    dependencies={['password']} 
+                    rules={[
+                        { required: true, message: "Подтвердите пароль" },
+                        ({ getFieldValue }) => ({
+                            validator(_, value) {
+                                if (!value || getFieldValue('password') === value) {
+                                    return Promise.resolve();
+                                }
+                                return Promise.reject(new Error('Пароли не совпадают!'));
+                            },
+                        }),
+                    ]}
+                    >
+                    <Input.Password
+                        placeholder="Повторите пароль"
+                        disabled={isEdit}
+                    />
+                </Form.Item>     
+            }               
             <Form.Item
                 label="полное имя"
                 name="fullName"
@@ -121,7 +177,7 @@ const CreateEditForm = ({gotUser = emptyUser, action}: CreateEditFormProps) => {
             <Form.Item
                 label="email"
                 name="email"
-                rules={[{ required: true, message: "Введите email" }]}
+                rules={[{ required: true, message: "Введите email", type: "email" }]}
             >
                 <Input
                     placeholder="Введите email"
@@ -137,18 +193,27 @@ const CreateEditForm = ({gotUser = emptyUser, action}: CreateEditFormProps) => {
                 <DatePicker
                     format="DD.MM.YYYY"
                     onChange={(date) => {
-                        changeHandler("birthDate", date ? date.toDate() : moment())
+                        changeHandler("birthDate", date ? date.toDate() : dayjs())
                     }}
                 />
             </Form.Item>
             <Form.Item
                 label="телефон"
                 name="telephone"
-                rules={[{ required: false}]}
+                rules={[
+                    { 
+                        required: false, 
+                        message: 'Введите телефон' 
+                    },
+                    { 
+                        pattern: /^\+7\d{10}$/, 
+                        message: 'Введите телефон в формате +7XXXXXXXXXX' 
+                    }
+                ]}
             >
                 <Input
                     addonBefore={<PhoneOutlined />}
-                    placeholder="+7 (___) ___-__-__"
+                    placeholder="+7XXXXXXXXXX"
                     onChange={(e) => changeHandler("telephone", e.target.value)}
                 />
             </Form.Item>
@@ -167,7 +232,7 @@ const CreateEditForm = ({gotUser = emptyUser, action}: CreateEditFormProps) => {
                     Cогласен с пользовательским соглашением
                 </Checkbox>
             </Form.Item>
-            <Form.Item className={styles.buttons}>
+            <Form.Item className={styles.buttons} name="submit">
                 <Space>
                     <Button type="primary" htmlType="submit">
                         Сохранить
@@ -175,6 +240,23 @@ const CreateEditForm = ({gotUser = emptyUser, action}: CreateEditFormProps) => {
                     <Button onClick={() => navigate("/")}>
                         Отмена
                     </Button>
+                    {(action === "edit") &&
+                        <>
+                        <Modal
+                            title="Удаление пользователя"
+                            open={open}
+                            onOk={submitDeleteHandler}
+                            onCancel={hideModal}
+                            okText="Да"
+                            cancelText="Нет"
+                        >
+                            Вы действительно хотите удалить пользователя?
+                        </Modal>
+                        <Button color="danger" variant="solid" onClick={() => showModal()}>
+                            Удалить пользователя
+                        </Button>
+                        </>
+                    }
                 </Space>
         </Form.Item>
         </Form>
