@@ -2,7 +2,9 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import Router from "./router";
 import "antd/dist/reset.css";
+import { Provider } from 'react-redux';
 import { AntdConfigProvider } from "./antd.config";
+import { store } from "@/shared/store";
 
 export const start = () => {
   const root = ReactDOM.createRoot(
@@ -10,9 +12,11 @@ export const start = () => {
   );
   root.render(
     <React.StrictMode>
-        <AntdConfigProvider>
-            <Router />
-        </AntdConfigProvider>
+        <Provider store={store}>
+          <AntdConfigProvider>
+              <Router />
+          </AntdConfigProvider>
+        </Provider>
     </React.StrictMode>
   );
 };

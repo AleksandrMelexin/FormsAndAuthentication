@@ -15,13 +15,17 @@ export class UsersService {
       fullName: 'Admin',
       password: 'admin',
       email: 'admin@inno.tech',
+      birthDate: new Date(),
+      employment: 'Admin',
+      userAgreement: true,
+      telephone: '+71231234545',
     },
   };
 
   getAll(): UserGetDto[] {
     return Object.values(this.usersDB).map(
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      ({ password, ...rest }: IUsersData) => ({ ...rest }),
+      ({ ...rest }: IUsersData) => ({ ...rest }),
     );
   }
 
